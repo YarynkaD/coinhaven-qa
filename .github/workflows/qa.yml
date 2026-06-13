@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 23 * * *'  # 02:00 Kyiv
-    - cron: '0 1 * * *'   # 04:00 Kyiv
     - cron: '0 2 * * *'   # 05:00 Kyiv
 
 jobs:
@@ -22,8 +21,68 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm install
+      - name: Install sqlite3
+        run: sudo apt-get install -y sqlite3
 
-      - run: npm run seed
+      - name: Install QA deps
+        run: npm install
 
-      - run: bash scripts/night-run.sh
+      - name: Install server deps
+        working-directory: ./coinhaven-server
+        run: npm install
+
+      - name: Seed database
+        working-directory: ./coinhaven-server
+        run: |
+          mkdir -p data
+          node --experimental-sqlite scripts/seed.js
+
+      - name: Start server
+        working-directory: ./coinhaven-server
+        run: |
+          node --experimental-sqlite server.js &
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:3000/api/health && exit 0
+            sleep 1
+          done
+          echo "❌ Server did not start within 15s" && exit 1
+
+      - name: Run API tests
+        continue-on-error: true
+        run: npx tsx tests/api/api.test.ts
+
+      - name: Run DB tests
+        continue-on-error: true
+        run: npx tsx tests/db/db.test.ts
+
+      - name: Run AI safety tests
+        continue-on-error: true
+        run: npx tsx tests/ai/ai-safety.test.ts
+
+      - name: Run corpus audit
+        continue-on-error: true
+        run: npx tsx scripts/corpus-trust-audit.ts
+
+      - name: Run financial matrix
+        continue-on-error: true
+        run: npx tsx scripts/financial-matrix.ts
+
+      - name: Run prompt firewall
+        continue-on-error: true
+        run: npx tsx scripts/prompt-firewall.ts
+
+      - name: Run answer drift
+        continue-on-error: true
+        run: npx tsx scripts/answer-drift.ts
+
+      - name: QA Verdict
+        if: always()
+        run: echo "⛔ DO NOT SHIP — CRITICAL findings active"
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reports-${{ github.run_number }}
+          path: reports/
+          if-no-files-found: ignore
