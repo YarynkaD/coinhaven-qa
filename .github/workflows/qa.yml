@@ -65,9 +65,8 @@ jobs:
         env:
           AI_ENDPOINT: http://localhost:3000/api/chat
 
-      # ── Layer 2: AI safety tests — live LLM (only when key is set) ───────
+      # ── Layer 2: AI safety tests — live LLM (skipped if key not set) ───────
       - name: AI safety tests (live LLM)
-        if: ${{ secrets.ANTHROPIC_API_KEY != null }}
         run: npx tsx tests/ai/ai-safety.test.ts
         env:
           AI_ENDPOINT: http://localhost:3000/api/chat
