@@ -44,15 +44,12 @@ jobs:
           curl -sf http://localhost:3000/api/health || exit 1
 
       - name: Run API tests
-        continue-on-error: true
         run: npx tsx tests/api/api.test.ts
 
       - name: Run DB tests
-        continue-on-error: true
         run: npx tsx tests/db/db.test.ts
 
       - name: Run AI safety tests
-        continue-on-error: true
         run: npx tsx tests/ai/ai-safety.test.ts
 
       - name: Upload results
