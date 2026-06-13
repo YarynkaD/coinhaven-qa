@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test:all": "npx tsx tests/api/api.test.ts && npx tsx tests/ai/ai-safety.test.ts && npx tsx tests/db/db.test.ts",
+    "seed": "node --experimental-sqlite coinhaven-server/scripts/seed.js",
+    "start": "node --experimental-sqlite coinhaven-server/server.js",
+    "test": "npm run test:all",
+    "test:all": "playwright test",
     "test:api": "npx tsx tests/api/api.test.ts",
     "test:ai": "npx tsx tests/ai/ai-safety.test.ts",
     "test:db": "npx tsx tests/db/db.test.ts",
