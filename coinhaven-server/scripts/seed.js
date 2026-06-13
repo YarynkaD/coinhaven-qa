@@ -1,8 +1,8 @@
 'use strict';
-const Database = require('better-sqlite3');
+const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 
-const db = new Database(path.join(__dirname, '../data/coinhaven.db'));
+const db = new DatabaseSync(path.join(__dirname, '../data/coinhaven.db'));
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (

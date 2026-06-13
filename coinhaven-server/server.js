@@ -1,6 +1,6 @@
 'use strict';
 const express  = require('express');
-const Database = require('better-sqlite3');
+const { DatabaseSync: Database } = require('node:sqlite');
 const path     = require('path');
 
 const PORT         = process.env.PORT         ?? 3000;
