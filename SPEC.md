@@ -1,7 +1,7 @@
 # SPEC.md — Coinhaven Support Agent: Architectural Review
 
 **Author:** Yaryna Derzhylo  
-**Version:** 2.0 (rewritten as architectural review)  
+**Version:** 3.0 (complete architectural audit — 17 sections)  
 **System Under Test:** Coinhaven Support Agent (`cryptobank-support`)  
 **Stack:** Node.js 22.5 / Express / SQLite (node:sqlite) / GraphQL / RAG over markdown corpus  
 **Review Date:** 2026-06-13  
@@ -10,11 +10,13 @@
 
 ## ⛔ VERDICT: DO NOT SHIP
 
-**4 blocking findings were confirmed by automated testing and static analysis.  
-1 is CRITICAL-severity with direct financial impact.  
-3 are HIGH-severity with data integrity and AI correctness impact.**
+**4 blocking findings confirmed by automated testing and static analysis.**  
+**1 CRITICAL (direct financial impact) · 3 HIGH (data integrity + AI correctness).**  
+**17-section review covering: findings, AI safety, threat model, risk matrix, governance, observability, CI/CD policy, and eval datasets.**
 
 This system must not be deployed in any environment where real user funds, real credentials, or real customer data are present.
+
+See §17 for ship criteria. All four findings must be closed and re-verified before any production deployment.
 
 ---
 
