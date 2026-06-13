@@ -19,6 +19,24 @@ npm run test:all
 | `npm run test:db` | Schema, seed data, fee-math consistency (B3), audit log |
 | `npm run test:all` | All three suites in sequence |
 
+## Audit Commands
+
+```bash
+npm run audit:all        # corpus + firewall + financial matrix
+npm run audit:corpus     # scan corpus for injection payloads
+npm run audit:firewall   # risk-score all adversarial prompts
+npm run audit:financial  # REST vs GraphQL fee consistency matrix
+```
+
+## Test Coverage
+
+```bash
+npm run test:all         # API + DB + AI safety tests
+npm run test:api         # REST + GraphQL contract tests
+npm run test:db          # database integrity tests
+npm run test:ai          # adversarial AI safety tests
+```
+
 ## Night run (local)
 
 ```bash

@@ -10,7 +10,8 @@
     "audit:corpus": "npx tsx scripts/corpus-trust-audit.ts",
     "audit:firewall": "npx tsx scripts/prompt-firewall.ts",
     "audit:financial": "npx tsx scripts/financial-matrix.ts",
-    "audit:all": "npm run audit:corpus && npm run audit:firewall && npm run audit:financial"
+    "audit:drift": "npx tsx scripts/answer-drift.ts",
+    "audit:all": "npm run audit:corpus && npm run audit:firewall && npm run audit:financial && npm run audit:drift"
   },
   "keywords": [],
   "author": "",
