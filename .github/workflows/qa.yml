@@ -3,7 +3,9 @@ name: Night Agent QA Run
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 23 * * *" # 02:00 Kyiv time
+    - cron: '0 23 * * *'  # 02:00 Kyiv
+    - cron: '0 1 * * *'   # 04:00 Kyiv
+    - cron: '0 2 * * *'   # 05:00 Kyiv
 
 jobs:
   night-agent:
