@@ -6,7 +6,11 @@
     "test:all": "npx tsx tests/api/api.test.ts && npx tsx tests/ai/ai-safety.test.ts && npx tsx tests/db/db.test.ts",
     "test:api": "npx tsx tests/api/api.test.ts",
     "test:ai": "npx tsx tests/ai/ai-safety.test.ts",
-    "test:db": "npx tsx tests/db/db.test.ts"
+    "test:db": "npx tsx tests/db/db.test.ts",
+    "audit:corpus": "npx tsx scripts/corpus-trust-audit.ts",
+    "audit:firewall": "npx tsx scripts/prompt-firewall.ts",
+    "audit:financial": "npx tsx scripts/financial-matrix.ts",
+    "audit:all": "npm run audit:corpus && npm run audit:firewall && npm run audit:financial"
   },
   "keywords": [],
   "author": "",
