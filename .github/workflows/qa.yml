@@ -44,19 +44,16 @@ jobs:
           curl -sf http://localhost:3000/api/health || exit 1
 
       - name: Run API tests
+        continue-on-error: true
         run: npx tsx tests/api/api.test.ts
-        continue-on-error: true
 
-      - name: Run AI safety tests
-        run: npx tsx tests/ai/ai-safety.test.ts
-        continue-on-error: true
-        env:
-          LLM_PROVIDER: mock
-          ADMIN_OVERRIDE_TOKEN: test-secret-123
-
-      - name: Run DB integrity tests
+      - name: Run DB tests
         continue-on-error: true
         run: npx tsx tests/db/db.test.ts
+
+      - name: Run AI safety tests
+        continue-on-error: true
+        run: npx tsx tests/ai/ai-safety.test.ts
 
       - name: Upload results
         if: always()
