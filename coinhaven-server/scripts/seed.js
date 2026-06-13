@@ -1,7 +1,9 @@
 'use strict';
 const { DatabaseSync } = require('node:sqlite');
+const { mkdirSync } = require('fs');
 const path = require('path');
 
+mkdirSync(path.join(__dirname, '../data'), { recursive: true });
 const db = new DatabaseSync(path.join(__dirname, '../data/coinhaven.db'));
 
 db.exec(`
