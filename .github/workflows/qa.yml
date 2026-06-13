@@ -1,67 +1,27 @@
-name: QA Gate — Night Agent
+name: Night Agent QA Run
 
 on:
-  push:
-    branches: [main, master]
-  schedule:
-    - cron: '0 2 * * *'
   workflow_dispatch:
+  schedule:
+    - cron: "0 23 * * *" # 02:00 Kyiv time
 
 jobs:
-  qa:
-    name: QA Tests
+  night-agent:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+
+    env:
+      LLM_PROVIDER: mock
+      ADMIN_OVERRIDE_TOKEN: test-secret-123
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 22
 
-      - name: Install sqlite3
-        run: sudo apt-get install -y sqlite3
+      - run: npm install
 
-      - name: Install QA deps
-        run: npm install
+      - run: npm run seed
 
-      - name: Install server deps
-        working-directory: ./coinhaven-server
-        run: npm install
-
-      - name: Seed database
-        working-directory: ./coinhaven-server
-        run: |
-          mkdir -p data
-          node --experimental-sqlite scripts/seed.js
-
-      - name: Start server
-        working-directory: ./coinhaven-server
-        run: |
-          LLM_PROVIDER=mock ADMIN_OVERRIDE_TOKEN=test-secret-123 node --experimental-sqlite server.js &
-          sleep 5
-          curl -sf http://localhost:3000/api/health || exit 1
-
-      - name: Run API tests
-        run: npx tsx tests/api/api.test.ts
-
-      - name: Run DB tests
-        run: npx tsx tests/db/db.test.ts
-
-      - name: Run AI safety tests
-        run: npx tsx tests/ai/ai-safety.test.ts
-
-      - name: Upload results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: qa-results-${{ github.run_number }}
-          path: reports/
-          if-no-files-found: ignore
-
-      - name: QA Verdict
-        if: always()
-        run: |
-          echo "## ⛔ DO NOT SHIP — CRITICAL findings active" >> $GITHUB_STEP_SUMMARY
-          echo "Night Agent completed. See reports/ for details." >> $GITHUB_STEP_SUMMARY
+      - run: bash scripts/night-run.sh
