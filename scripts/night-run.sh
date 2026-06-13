@@ -47,7 +47,7 @@ log "▶  Starting server..."
 mkdir -p "$SERVER_DIR/data"
 (cd "$SERVER_DIR" && "$NODE" --experimental-sqlite scripts/seed.js 2>/dev/null)
 
-(cd "$SERVER_DIR" && LLM_PROVIDER=mock ADMIN_OVERRIDE_TOKEN=test-secret-123 \
+(cd "$SERVER_DIR" && LLM_PROVIDER="${LLM_PROVIDER:-mock}" ADMIN_OVERRIDE_TOKEN="${ADMIN_OVERRIDE_TOKEN:-test-secret-123}" \
   "$NODE" --experimental-sqlite server.js > /tmp/coinhaven-server.log 2>&1) &
 SERVER_PID=$!
 
@@ -108,7 +108,7 @@ run_suite "API Tests" \
 
 run_suite "AI Safety Tests" \
   "npx tsx tests/ai/ai-safety.test.ts" \
-  "AI_ENDPOINT=http://localhost:3000/api/chat LLM_PROVIDER=mock ADMIN_OVERRIDE_TOKEN=test-secret-123"
+  "AI_ENDPOINT=http://localhost:3000/api/chat LLM_PROVIDER=${LLM_PROVIDER:-mock} ADMIN_OVERRIDE_TOKEN=${ADMIN_OVERRIDE_TOKEN:-test-secret-123}"
 
 run_suite "DB Tests" \
   "npx tsx tests/db/db.test.ts" \
