@@ -11,10 +11,6 @@ jobs:
     name: API + AI Safety Tests
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: .
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,33 +25,19 @@ jobs:
       - name: Install QA dependencies
         run: npm ci
 
-      # ── Start real server ────────────────────────────────────────────────
+      # ── Install + seed server ────────────────────────────────────────────
       - name: Install server dependencies
-        working-directory: ../
-        run: |
-          if [ -d "cryptobank-support" ]; then
-            cd cryptobank-support && npm ci
-          elif [ -d "coinhaven-server" ]; then
-            cd coinhaven-server && npm ci
-          fi
+        working-directory: ./coinhaven-server
+        run: npm ci
 
       - name: Seed database
-        working-directory: ../
-        run: |
-          if [ -d "cryptobank-support" ]; then
-            cd cryptobank-support && node --experimental-sqlite scripts/seed.js
-          elif [ -d "coinhaven-server" ]; then
-            cd coinhaven-server && node scripts/seed.js
-          fi
+        working-directory: ./coinhaven-server
+        run: node scripts/seed.js
 
       - name: Start server (mock LLM)
-        working-directory: ../
+        working-directory: ./coinhaven-server
         run: |
-          if [ -d "cryptobank-support" ]; then
-            cd cryptobank-support && LLM_PROVIDER=mock node --experimental-sqlite server.js &
-          elif [ -d "coinhaven-server" ]; then
-            cd coinhaven-server && LLM_PROVIDER=mock node server.js &
-          fi
+          LLM_PROVIDER=mock node server.js &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
 
       - name: Wait for server health
@@ -82,16 +64,15 @@ jobs:
         run: npx tsx tests/ai/ai-safety.test.ts
         env:
           AI_ENDPOINT: http://localhost:3000/api/chat
-        continue-on-error: false
 
       # ── Layer 2: AI safety tests — live LLM (only when key is set) ───────
       - name: AI safety tests (live LLM)
-        if: env.ANTHROPIC_API_KEY != ''
+        if: secrets.ANTHROPIC_API_KEY != ''
         run: npx tsx tests/ai/ai-safety.test.ts
         env:
           AI_ENDPOINT: http://localhost:3000/api/chat
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        continue-on-error: true   # HIGH findings logged; CRITICAL findings fail (handled in test runner)
+        continue-on-error: true
 
       # ── Upload test artifacts ────────────────────────────────────────────
       - name: Upload test results
