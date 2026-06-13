@@ -19,31 +19,23 @@ npm run test:all
 | `npm run test:db` | Schema, seed data, fee-math consistency (B3), audit log |
 | `npm run test:all` | All three suites in sequence |
 
-## Audit Commands
+## One command
 
 ```bash
-npm run audit:all        # corpus + firewall + financial matrix
-npm run audit:corpus     # scan corpus for injection payloads
-npm run audit:firewall   # risk-score all adversarial prompts
-npm run audit:financial  # REST vs GraphQL fee consistency matrix
+npm run test:all
 ```
 
-## Test Coverage
+## Audit
 
 ```bash
-npm run test:all         # API + DB + AI safety tests
-npm run test:api         # REST + GraphQL contract tests
-npm run test:db          # database integrity tests
-npm run test:ai          # adversarial AI safety tests
+npm run audit:all
 ```
 
-## Night run (local)
+## Night Agent
 
 ```bash
 bash scripts/night-run.sh
 ```
-
-Starts the mock server, runs all suites, and writes a timestamped report to `reports/`.
 
 ## CI
 
