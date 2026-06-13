@@ -102,6 +102,10 @@ run_suite "AI Safety Tests" \
   "npx tsx tests/ai/ai-safety.test.ts" \
   "AI_ENDPOINT=http://localhost:3000/api/chat LLM_PROVIDER=mock ADMIN_OVERRIDE_TOKEN=test-secret-123"
 
+run_suite "DB Tests" \
+  "npx tsx tests/db/db.test.ts" \
+  "DB_PATH=$SERVER_DIR/data/coinhaven.db"
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 log ""
 hr

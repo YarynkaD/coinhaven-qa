@@ -54,6 +54,12 @@ jobs:
           LLM_PROVIDER: mock
           ADMIN_OVERRIDE_TOKEN: test-secret-123
 
+      - name: Run DB tests
+        run: npx tsx tests/db/db.test.ts
+        continue-on-error: true
+        env:
+          DB_PATH: ./coinhaven-server/data/coinhaven.db
+
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4

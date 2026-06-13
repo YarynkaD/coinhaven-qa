@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test:api": "node --loader ts-node/esm tests/api/api.test.ts",
-    "test:ai": "node --loader ts-node/esm tests/ai/ai-safety.test.ts"
+    "test:all": "npx tsx tests/api/api.test.ts && npx tsx tests/ai/ai-safety.test.ts && npx tsx tests/db/db.test.ts",
+    "test:api": "npx tsx tests/api/api.test.ts",
+    "test:ai": "npx tsx tests/ai/ai-safety.test.ts",
+    "test:db": "npx tsx tests/db/db.test.ts"
   },
   "keywords": [],
   "author": "",
