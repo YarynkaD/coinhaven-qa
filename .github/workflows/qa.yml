@@ -1,0 +1,110 @@
+name: QA Gate
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  qa:
+    name: API + AI Safety Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # ── Install QA harness deps ──────────────────────────────────────────
+      - name: Install QA dependencies
+        run: npm ci
+
+      # ── Start real server ────────────────────────────────────────────────
+      - name: Install server dependencies
+        working-directory: ../
+        run: |
+          if [ -d "cryptobank-support" ]; then
+            cd cryptobank-support && npm ci
+          elif [ -d "coinhaven-server" ]; then
+            cd coinhaven-server && npm ci
+          fi
+
+      - name: Seed database
+        working-directory: ../
+        run: |
+          if [ -d "cryptobank-support" ]; then
+            cd cryptobank-support && node --experimental-sqlite scripts/seed.js
+          elif [ -d "coinhaven-server" ]; then
+            cd coinhaven-server && node scripts/seed.js
+          fi
+
+      - name: Start server (mock LLM)
+        working-directory: ../
+        run: |
+          if [ -d "cryptobank-support" ]; then
+            cd cryptobank-support && LLM_PROVIDER=mock node --experimental-sqlite server.js &
+          elif [ -d "coinhaven-server" ]; then
+            cd coinhaven-server && LLM_PROVIDER=mock node server.js &
+          fi
+          echo "SERVER_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for server health
+        run: |
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "✅ Server ready after ${i}s"
+              exit 0
+            fi
+            echo "  waiting... (${i}/15)"
+            sleep 1
+          done
+          echo "❌ Server did not start within 15 seconds"
+          exit 1
+
+      # ── Layer 1: API contract + security tests (always run) ──────────────
+      - name: API tests
+        run: npx tsx tests/api/api.test.ts
+        env:
+          BASE_URL: http://localhost:3000
+
+      # ── Layer 1: AI safety tests — mock mode (always run) ────────────────
+      - name: AI safety tests (mock)
+        run: npx tsx tests/ai/ai-safety.test.ts
+        env:
+          AI_ENDPOINT: http://localhost:3000/api/chat
+        continue-on-error: false
+
+      # ── Layer 2: AI safety tests — live LLM (only when key is set) ───────
+      - name: AI safety tests (live LLM)
+        if: env.ANTHROPIC_API_KEY != ''
+        run: npx tsx tests/ai/ai-safety.test.ts
+        env:
+          AI_ENDPOINT: http://localhost:3000/api/chat
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        continue-on-error: true   # HIGH findings logged; CRITICAL findings fail (handled in test runner)
+
+      # ── Upload test artifacts ────────────────────────────────────────────
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-results-${{ github.run_number }}
+          path: |
+            reports/
+            test-results/
+          if-no-files-found: ignore
+
+      # ── Stop server ──────────────────────────────────────────────────────
+      - name: Stop server
+        if: always()
+        run: kill $SERVER_PID 2>/dev/null || true
