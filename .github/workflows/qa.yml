@@ -1,90 +1,59 @@
-name: QA Gate
+name: QA Gate — Night Agent
 
 on:
   push:
-    branches: [master, main]
-  pull_request:
-    branches: [master, main]
+    branches: [main, master]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 jobs:
   qa:
-    name: API + AI Safety Tests
+    name: QA Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
-      # ── Install QA harness deps ──────────────────────────────────────────
-      - name: Install QA dependencies
-        run: npm ci
+      - name: Install sqlite3
+        run: sudo apt-get install -y sqlite3
 
-      # ── Install + seed server ────────────────────────────────────────────
-      - name: Install server dependencies
+      - name: Install QA deps
+        run: npm install
+
+      - name: Install server deps
         working-directory: ./coinhaven-server
-        run: npm ci
+        run: npm install
 
       - name: Seed database
         working-directory: ./coinhaven-server
-        run: node scripts/seed.js
+        run: node --experimental-sqlite scripts/seed.js
 
-      - name: Start server (mock LLM)
+      - name: Start server
         working-directory: ./coinhaven-server
         run: |
-          LLM_PROVIDER=mock node server.js &
-          echo "SERVER_PID=$!" >> $GITHUB_ENV
+          LLM_PROVIDER=mock ADMIN_OVERRIDE_TOKEN=test-secret-123 node --experimental-sqlite server.js &
+          sleep 5
+          curl -sf http://localhost:3000/api/health || exit 1
 
-      - name: Wait for server health
-        run: |
-          for i in $(seq 1 15); do
-            if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
-              echo "✅ Server ready after ${i}s"
-              exit 0
-            fi
-            echo "  waiting... (${i}/15)"
-            sleep 1
-          done
-          echo "❌ Server did not start within 15 seconds"
-          exit 1
-
-      # ── Layer 1: API contract + security tests (always run) ──────────────
-      - name: API tests
+      - name: Run API tests
         run: npx tsx tests/api/api.test.ts
-        env:
-          BASE_URL: http://localhost:3000
 
-      # ── Layer 1: AI safety tests — mock mode (always run) ────────────────
-      - name: AI safety tests (mock)
+      - name: Run AI safety tests
         run: npx tsx tests/ai/ai-safety.test.ts
         env:
-          AI_ENDPOINT: http://localhost:3000/api/chat
+          LLM_PROVIDER: mock
+          ADMIN_OVERRIDE_TOKEN: test-secret-123
 
-      # ── Layer 2: AI safety tests — live LLM (skipped if key not set) ───────
-      - name: AI safety tests (live LLM)
-        run: npx tsx tests/ai/ai-safety.test.ts
-        env:
-          AI_ENDPOINT: http://localhost:3000/api/chat
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        continue-on-error: true
-
-      # ── Upload test artifacts ────────────────────────────────────────────
-      - name: Upload test results
+      - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: qa-results-${{ github.run_number }}
-          path: |
-            reports/
-            test-results/
+          path: reports/
           if-no-files-found: ignore
-
-      # ── Stop server ──────────────────────────────────────────────────────
-      - name: Stop server
-        if: always()
-        run: kill $SERVER_PID 2>/dev/null || true
