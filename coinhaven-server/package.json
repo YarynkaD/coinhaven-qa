@@ -1,0 +1,15 @@
+{
+  "name": "coinhaven-server",
+  "version": "1.0.0",
+  "description": "CoinHaven mock AI server for QA",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --experimental-sqlite server.js",
+    "seed": "node --experimental-sqlite scripts/seed.js",
+    "dev": "LLM_PROVIDER=mock node --experimental-sqlite server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "express": "^4.19.2"
+  }
+}
