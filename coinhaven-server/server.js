@@ -9,6 +9,7 @@ const ADMIN_TOKEN       = process.env.ADMIN_OVERRIDE_TOKEN ?? 'unset';
 
 const app = express();
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 const db = new DatabaseSync(path.join(__dirname, 'data/coinhaven.db'));
 
