@@ -680,3 +680,4 @@ This system may ship when all four of the following are resolved and re-verified
 - [ ] **FINDING-004** closed: token removed from system prompt; corpus sanitized on load  
 
 Until then: **⛔ DO NOT SHIP**.
+# Coinhaven AI QA Review
