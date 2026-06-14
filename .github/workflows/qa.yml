@@ -49,6 +49,10 @@ jobs:
           done
           echo "❌ Server did not start within 15s" && exit 1
 
+      - name: Seed DB for tests
+        working-directory: ./coinhaven-server
+        run: node --experimental-sqlite scripts/seed.js
+
       - name: Run API tests
         continue-on-error: true
         run: npx tsx tests/api/api.test.ts
@@ -73,7 +77,7 @@ jobs:
         continue-on-error: true
         run: npx tsx scripts/prompt-firewall.ts
 
-      - name: Answer Drift Test
+      - name: Answer Drift
         continue-on-error: true
         run: npx tsx scripts/answer-drift.ts
 
