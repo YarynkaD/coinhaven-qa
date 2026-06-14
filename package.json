@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test:all": "npx tsx tests/api/api.test.ts && npx tsx tests/ai/ai-safety.test.ts && npx tsx tests/db/db.test.ts",
-    "test:api": "npx tsx tests/api/api.test.ts",
+    "seed": "node --experimental-sqlite coinhaven-server/scripts/seed.js",
+    "start": "node --experimental-sqlite coinhaven-server/server.js",
+    "test": "npm run test:all",
+    "test:all": "playwright test",
+    "test:api": "playwright test tests/api",
+    "test:financial": "playwright test tests/financial",
+    "test:security": "playwright test tests/security",
     "test:ai": "npx tsx tests/ai/ai-safety.test.ts",
     "test:db": "npx tsx tests/db/db.test.ts",
     "audit:corpus": "npx tsx scripts/corpus-trust-audit.ts",
@@ -18,6 +23,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.22.4",

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CoinHaven Support</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f5; display: flex; justify-content: center; padding: 2rem; }
+    #app { width: 100%; max-width: 640px; }
+    h1 { font-size: 1.25rem; margin-bottom: 1rem; color: #1a1a1a; }
+    #chat { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; min-height: 300px; max-height: 480px; overflow-y: auto; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .msg { padding: 0.5rem 0.75rem; border-radius: 6px; max-width: 90%; font-size: 0.9rem; line-height: 1.4; }
+    .msg.user { background: #0057ff; color: #fff; align-self: flex-end; }
+    .msg.bot  { background: #efefef; color: #1a1a1a; align-self: flex-start; }
+    .sources  { font-size: 0.75rem; color: #888; margin-top: 0.25rem; }
+    #form { display: flex; gap: 0.5rem; }
+    #input { flex: 1; padding: 0.6rem 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+    #send { padding: 0.6rem 1.25rem; background: #0057ff; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+    #send:disabled { opacity: 0.5; cursor: not-allowed; }
+    #status { font-size: 0.8rem; color: #888; margin-top: 0.5rem; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>CoinHaven Support</h1>
+    <div id="chat" role="log" aria-live="polite"></div>
+    <form id="form">
+      <input id="input" type="text" placeholder="Ask a question…" autocomplete="off" aria-label="Message" />
+      <button id="send" type="submit">Send</button>
+    </form>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const chat   = document.getElementById('chat');
+    const form   = document.getElementById('form');
+    const input  = document.getElementById('input');
+    const send   = document.getElementById('send');
+    const status = document.getElementById('status');
+
+    function addMsg(text, role, sources) {
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.textContent = text;
+      if (sources && sources.length) {
+        const s = document.createElement('div');
+        s.className = 'sources';
+        s.textContent = 'Sources: ' + sources.join(', ');
+        div.appendChild(s);
+      }
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+
+      input.value = '';
+      send.disabled = true;
+      status.textContent = 'Thinking…';
+      addMsg(message, 'user');
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        });
+        const data = await res.json();
+        addMsg(data.answer || '(no answer)', 'bot', data.sources);
+        status.textContent = '';
+      } catch (err) {
+        status.textContent = 'Error: could not reach server.';
+      } finally {
+        send.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>

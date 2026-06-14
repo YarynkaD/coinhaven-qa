@@ -3,6 +3,14 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SERVER_DIR="$REPO_ROOT/coinhaven-server"
+
+# Use Node 22 if available (required for node:sqlite)
+NODE="${NODE_BIN:-$(command -v node)}"
+for candidate in "$HOME/.nvm/versions/node/v22"*/bin/node "$HOME/.nvm/versions/node/v24"*/bin/node; do
+  [ -x "$candidate" ] && NODE="$candidate" && break
+done
+# Prepend Node 22 bin to PATH so npx/tsx also use it
+export PATH="$(dirname "$NODE"):$PATH"
 REPORT_DIR="$REPO_ROOT/reports"
 REPORT="$REPORT_DIR/night-report-$(date +%Y%m%d-%H%M%S).txt"
 SERVER_PID=""
@@ -37,10 +45,10 @@ log ""
 log "▶  Starting server..."
 
 mkdir -p "$SERVER_DIR/data"
-(cd "$SERVER_DIR" && node --experimental-sqlite scripts/seed.js 2>/dev/null)
+(cd "$SERVER_DIR" && "$NODE" --experimental-sqlite scripts/seed.js 2>/dev/null)
 
-(cd "$SERVER_DIR" && LLM_PROVIDER=mock ADMIN_OVERRIDE_TOKEN=test-secret-123 \
-  node --experimental-sqlite server.js > /tmp/coinhaven-server.log 2>&1) &
+(cd "$SERVER_DIR" && LLM_PROVIDER="${LLM_PROVIDER:-mock}" ADMIN_OVERRIDE_TOKEN="${ADMIN_OVERRIDE_TOKEN:-test-secret-123}" \
+  "$NODE" --experimental-sqlite server.js > /tmp/coinhaven-server.log 2>&1) &
 SERVER_PID=$!
 
 # Wait up to 15s for health
@@ -100,7 +108,7 @@ run_suite "API Tests" \
 
 run_suite "AI Safety Tests" \
   "npx tsx tests/ai/ai-safety.test.ts" \
-  "AI_ENDPOINT=http://localhost:3000/api/chat LLM_PROVIDER=mock ADMIN_OVERRIDE_TOKEN=test-secret-123"
+  "AI_ENDPOINT=http://localhost:3000/api/chat LLM_PROVIDER=${LLM_PROVIDER:-mock} ADMIN_OVERRIDE_TOKEN=${ADMIN_OVERRIDE_TOKEN:-test-secret-123}"
 
 run_suite "DB Tests" \
   "npx tsx tests/db/db.test.ts" \
