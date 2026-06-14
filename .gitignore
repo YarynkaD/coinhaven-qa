@@ -3,3 +3,5 @@ dist/
 reports/
 test-results/
 *.db
+.env
+coinhaven-server/.env
