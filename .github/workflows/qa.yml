@@ -61,19 +61,19 @@ jobs:
         continue-on-error: true
         run: npx tsx tests/ai/ai-safety.test.ts
 
-      - name: Run corpus audit
+      - name: Corpus Trust Audit
         continue-on-error: true
         run: npx tsx scripts/corpus-trust-audit.ts
 
-      - name: Run financial matrix
+      - name: Financial Matrix
         continue-on-error: true
         run: npx tsx scripts/financial-matrix.ts
 
-      - name: Run prompt firewall
+      - name: Prompt Firewall
         continue-on-error: true
         run: npx tsx scripts/prompt-firewall.ts
 
-      - name: Run answer drift
+      - name: Answer Drift Test
         continue-on-error: true
         run: npx tsx scripts/answer-drift.ts
 
