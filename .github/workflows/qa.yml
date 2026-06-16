@@ -1,41 +1,34 @@
 name: Night Agent QA Run
-
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 23 * * *'   # 02:00 Kyiv (UTC+3)
-
 jobs:
   night-agent:
     runs-on: ubuntu-latest
-
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       LLM_PROVIDER: mock
       ADMIN_OVERRIDE_TOKEN: test-secret-123
-
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          token: ${{ secrets.NIGHT_AGENT_TOKEN }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Install sqlite3
         run: sudo apt-get install -y sqlite3
-
       - name: Install QA deps
         run: npm install
-
       - name: Install server deps
         working-directory: ./coinhaven-server
         run: npm install
-
       - name: Seed database
         working-directory: ./coinhaven-server
         run: |
           mkdir -p data
           node --experimental-sqlite scripts/seed.js
-
       - name: Start server
         working-directory: ./coinhaven-server
         run: |
@@ -44,44 +37,34 @@ jobs:
             curl -sf http://localhost:3000/api/health && exit 0
             sleep 1
           done
-          echo "❌ Server did not start within 15s" && exit 1
-
+          echo "Server did not start" && exit 1
       - name: Seed DB for tests
         working-directory: ./coinhaven-server
         run: node --experimental-sqlite scripts/seed.js
-
       - name: Run API tests
         continue-on-error: true
         run: npx tsx tests/api/api.test.ts
-
       - name: Run DB tests
         continue-on-error: true
         run: npx tsx tests/db/db.test.ts
-
       - name: Run AI safety tests
         continue-on-error: true
         run: npx tsx tests/ai/ai-safety.test.ts
-
       - name: Corpus Trust Audit
         continue-on-error: true
         run: npx tsx scripts/corpus-trust-audit.ts
-
       - name: Financial Matrix
         continue-on-error: true
         run: npx tsx scripts/financial-matrix.ts
-
       - name: Prompt Firewall
         continue-on-error: true
         run: npx tsx scripts/prompt-firewall.ts
-
       - name: Answer Drift
         continue-on-error: true
         run: npx tsx scripts/answer-drift.ts
-
       - name: QA Verdict
         if: always()
-        run: echo "⛔ DO NOT SHIP — CRITICAL findings active"
-
+        run: echo "DO NOT SHIP — CRITICAL findings active"
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
