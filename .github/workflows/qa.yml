@@ -1,8 +1,6 @@
 name: Night Agent QA Run
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 23 * * *'   # 02:00 Kyiv (UTC+3)
 jobs:
   night-agent:
     runs-on: ubuntu-latest
